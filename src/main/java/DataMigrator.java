@@ -3,6 +3,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
 
+
+//One time use class, this was used after implementing SQLite
+//to transfer the data I had in a .txt to my SQL so I didn't
+//have to recreate it. Could be useful later on. 
+
 public class DataMigrator {
 
     public static void main(String[] args) {

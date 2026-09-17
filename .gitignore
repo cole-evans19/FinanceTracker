@@ -4,6 +4,7 @@ target/
 # SQLite database (generated data, not source)
 *.db
 *.db-journal
+shiftDatabase.txt
 
 # Compiled class files (belt-and-suspenders, in case anything's outside target/)
 *.class
@@ -15,4 +16,4 @@ target/
 
 # OS-generated files
 Thumbs.db
-desktop.ini
+desktop.inis

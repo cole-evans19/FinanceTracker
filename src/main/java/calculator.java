@@ -1,7 +1,3 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -14,110 +10,36 @@ import java.util.Scanner;
 
 public class calculator {
 
+    private static final ShiftDAO shiftDAO = new ShiftDAO();
+
     public static void addShift(Shift shift) throws DuplicateShiftException {
         if (shift.getDate().isAfter(LocalDate.now())) {
             throw new IllegalArgumentException("Cannot add a shift with a future date.");
         }
-        validateShiftValues(shift.getHours(),shift.getWage(), shift.getCashTips(), shift.getCardTips());
-        if (isDuplicateShift(shift)) {
-            throw new DuplicateShiftException(
-                "A shift already exists for " + shift.getDate() + " (" + shift.getType() + ")"
-            );
-        }
+        validateShiftValues(shift.getHours(), shift.getWage(), shift.getCashTips(), shift.getCardTips());
 
-        try (FileWriter writer = new FileWriter("shiftDatabase.txt", true)) {
-            String line = shift.getDate() + "," +
-                          shift.getType() + "," +
-                          shift.getHours() + "," +
-                          shift.getWage() + "," +
-                          shift.getCashTips() + "," +
-                          shift.getCardTips() + "\n";
-            writer.write(line);
-        } catch (IOException e) {
-            System.out.println("Error writing shift to file: " + e.getMessage());
-        }
+        shiftDAO.insertShift(shift);
     }
 
     public static void deleteShift(LocalDate date, ShiftType type) {
-        List<String> remainingLines = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader("shiftDatabase.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] fields = line.split(",");
-                String existingDate = fields[0];
-                String existingType = fields[1];
-
-                boolean isMatch = existingDate.equals(date.toString()) &&
-                                   existingType.equals(type.toString());
-
-                if (!isMatch) {
-                    remainingLines.add(line);
-                }
-            }
-        } catch (IOException e) {
-            // File doesn't exist yet — nothing to delete
-            return;
-        }
-
-        try (FileWriter writer = new FileWriter("shiftDatabase.txt", false)) {
-            for (String line : remainingLines) {
-                writer.write(line + "\n");
-            }
-        } catch (IOException e) {
-            System.out.println("Error rewriting shift database: " + e.getMessage());
-        }
-    }
-
-    private static boolean isDuplicateShift(Shift shift) {
-        try (BufferedReader reader = new BufferedReader(new FileReader("shiftDatabase.txt"))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] fields = line.split(",");
-                String existingDate = fields[0];
-                String existingType = fields[1];
-
-                if (existingDate.equals(shift.getDate().toString()) &&
-                    existingType.equals(shift.getType().toString())) {
-                    return true;
-                }
-            }
-        } catch (IOException e) {
-            return false;
-        }
-        return false;
+        shiftDAO.deleteShift(date, type);
     }
 
     // Core function: display all shifts between two dates (inclusive)
     public static void displayShifts(LocalDate startDate, LocalDate endDate) {
         validateDateRange(startDate, endDate);
-        int shiftsWorked = 0;
+
+        List<Shift> shifts = shiftDAO.findShiftsBetween(startDate, endDate);
+
+        int shiftsWorked = shifts.size();
         double grossPay = 0;
         double totalCardTips = 0;
         double totalCashTips = 0;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader("shiftDatabase.txt"))) {
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                String[] fields = line.split(",");
-                LocalDate shiftDate = LocalDate.parse(fields[0]);
-
-                if (!shiftDate.isBefore(startDate) && !shiftDate.isAfter(endDate)) {
-                    double hours = Double.parseDouble(fields[2]);
-                    double wage = Double.parseDouble(fields[3]);
-                    double cashTips = Double.parseDouble(fields[4]);
-                    double cardTips = Double.parseDouble(fields[5]);
-
-                    shiftsWorked++;
-                    grossPay += (hours * wage) + cashTips + cardTips;
-                    totalCashTips += cashTips;
-                    totalCardTips += cardTips;
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("No shift data found.");
-            return;
+        for (Shift shift : shifts) {
+            grossPay += shift.getGrossPay();
+            totalCashTips += shift.getCashTips();
+            totalCardTips += shift.getCardTips();
         }
 
         long daysInRange = ChronoUnit.DAYS.between(startDate, endDate) + 1;
@@ -152,37 +74,18 @@ public class calculator {
 
     public static void shiftProfitability(LocalDate startDate, LocalDate endDate) {
         validateDateRange(startDate, endDate);
+
+        List<Shift> shifts = shiftDAO.findShiftsBetween(startDate, endDate);
         Map<String, ShiftStats> statsMap = new HashMap<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader("shiftDatabase.txt"))) {
-            String line;
+        for (Shift shift : shifts) {
+            DayOfWeek day = shift.getDate().getDayOfWeek();
+            String key = day + " " + shift.getType();
 
-            while ((line = reader.readLine()) != null) {
-                String[] fields = line.split(",");
-                LocalDate shiftDate = LocalDate.parse(fields[0]);
-                String type = fields[1];
-
-                if (!shiftDate.isBefore(startDate) && !shiftDate.isAfter(endDate)) {
-                    double hours = Double.parseDouble(fields[2]);
-                    double wage = Double.parseDouble(fields[3]);
-                    double cashTips = Double.parseDouble(fields[4]);
-                    double cardTips = Double.parseDouble(fields[5]);
-
-                    double gross = (hours * wage) + cashTips + cardTips;
-                    double tips = cashTips + cardTips;
-
-                    DayOfWeek day = shiftDate.getDayOfWeek();
-                    String key = day + " " + type;
-
-                    ShiftStats stats = statsMap.computeIfAbsent(key, k -> new ShiftStats());
-                    stats.totalGross += gross;
-                    stats.totalTips += tips;
-                    stats.count++;
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("No shift data found.");
-            return;
+            ShiftStats stats = statsMap.computeIfAbsent(key, k -> new ShiftStats());
+            stats.totalGross += shift.getGrossPay();
+            stats.totalTips += shift.getTotalTips();
+            stats.count++;
         }
 
         if (statsMap.isEmpty()) {
@@ -375,6 +278,7 @@ public class calculator {
     }
 
     public static void main(String args[]) {
+        DatabaseManager.initializeDatabase();
         begin();
-    } 
+    }
 }

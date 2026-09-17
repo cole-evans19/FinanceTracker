@@ -1,8 +1,0 @@
-src\main\java\DatabaseManager.class
-src\main\java\ShiftType.class
-src\main\java\DataMigrator.class
-src\main\java\Shift.class
-src\main\java\DuplicateShiftException.class
-src\main\java\calculator.class
-src\main\java\ShiftDAO.class
-src\main\java\calculator$ShiftStats.class

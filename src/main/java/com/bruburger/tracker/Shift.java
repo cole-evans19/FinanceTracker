@@ -1,3 +1,4 @@
+package com.bruburger.tracker;
 import java.time.LocalDate;
 
 public class Shift {
@@ -7,6 +8,10 @@ public class Shift {
     private double wage;
     private double cashTips;
     private double cardTips;
+
+    public Shift() {
+        
+    }
 
     public Shift(LocalDate date, ShiftType type, double hours, double wage, double cashTips, double cardTips) {
         this.date = date;

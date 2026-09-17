@@ -1,7 +1,9 @@
-C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\calculator.java
-C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\DatabaseManager.java
-C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\DataMigrator.java
-C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\DuplicateShiftException.java
-C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\Shift.java
-C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\ShiftDAO.java
-C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\ShiftType.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\calculator.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\DatabaseManager.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\DataMigrator.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\DuplicateShiftException.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\FinanceTrackerApplication.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\Shift.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\ShiftController.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\ShiftDAO.java
+C:\Users\15748\Desktop\resumePortfolio\BruBurgerFinanceTracker\src\main\java\com\bruburger\tracker\ShiftType.java

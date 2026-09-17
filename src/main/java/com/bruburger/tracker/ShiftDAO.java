@@ -1,3 +1,7 @@
+package com.bruburger.tracker;
+
+import org.springframework.stereotype.Repository;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -6,6 +10,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository 
 public class ShiftDAO {
 
     public void insertShift(Shift shift) throws DuplicateShiftException {

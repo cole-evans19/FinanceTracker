@@ -9,6 +9,9 @@ import java.time.LocalDate;
 //to transfer the data I had in a .txt to my SQL so I didn't
 //have to recreate it. Could be useful later on. 
 
+//Sidenote, reused this again after I switched ShiftDOA to point
+//at supabase instead of SQLite. 
+
 public class DataMigrator {
 
     public static void main(String[] args) {

@@ -1,4 +1,5 @@
 package com.bruburger.tracker;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -6,24 +7,24 @@ import java.sql.Statement;
 
 public class DatabaseManager {
 
-    private static final String DB_URL = "jdbc:sqlite:shiftDatabase.db";
+    private static final String DB_URL = "jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:5432/postgres";
+    private static final String DB_USER = "postgres.sgjfjjgstkoufgdfmcpm";
+    private static final String DB_PASSWORD = System.getenv("SUPABASE_DB_PASSWORD");
 
-    // Every other class calls this to get a connection to the database.
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL);
+        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
-    // Call this once when the app starts up.
     public static void initializeDatabase() {
         String createTableSQL = """
             CREATE TABLE IF NOT EXISTS shifts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date TEXT NOT NULL,
+                id SERIAL PRIMARY KEY,
+                date DATE NOT NULL,
                 type TEXT NOT NULL,
-                hours REAL NOT NULL,
-                wage REAL NOT NULL,
-                cash_tips REAL NOT NULL,
-                card_tips REAL NOT NULL,
+                hours DOUBLE PRECISION NOT NULL,
+                wage DOUBLE PRECISION NOT NULL,
+                cash_tips DOUBLE PRECISION NOT NULL,
+                card_tips DOUBLE PRECISION NOT NULL,
                 UNIQUE(date, type)
             );
             """;

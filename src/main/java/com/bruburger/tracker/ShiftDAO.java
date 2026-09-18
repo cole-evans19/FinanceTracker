@@ -22,7 +22,7 @@ public class ShiftDAO {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, shift.getDate().toString());
+            stmt.setDate(1, java.sql.Date.valueOf(shift.getDate()));
             stmt.setString(2, shift.getType().toString());
             stmt.setDouble(3, shift.getHours());
             stmt.setDouble(4, shift.getWage());
@@ -47,7 +47,7 @@ public class ShiftDAO {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, date.toString());
+            stmt.setDate(1, java.sql.Date.valueOf(date));
             stmt.setString(2, type.toString());
 
             stmt.executeUpdate();
@@ -64,8 +64,8 @@ public class ShiftDAO {
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, startDate.toString());
-            stmt.setString(2, endDate.toString());
+            stmt.setDate(1, java.sql.Date.valueOf(startDate));
+            stmt.setDate(2, java.sql.Date.valueOf(endDate));
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -82,7 +82,7 @@ public class ShiftDAO {
 
     private Shift mapRowToShift(ResultSet rs) throws SQLException {
         return new Shift(
-            LocalDate.parse(rs.getString("date")),
+            rs.getDate("date").toLocalDate(),
             ShiftType.valueOf(rs.getString("type")),
             rs.getDouble("hours"),
             rs.getDouble("wage"),

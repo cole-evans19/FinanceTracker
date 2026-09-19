@@ -24,6 +24,11 @@ public class DataMigrator {
         try (BufferedReader reader = new BufferedReader(new FileReader("shiftDatabase.txt"))) {
             String line;
 
+            UserDAO userDAO = new UserDAO();
+            int userId = userDAO.findByUsername("cevansdrp")
+                .orElseThrow(() -> new RuntimeException("User not found - register first,"))
+                .getId();
+                
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
 
@@ -35,11 +40,11 @@ public class DataMigrator {
                 double wage = Double.parseDouble(fields[3]);
                 double cashTips = Double.parseDouble(fields[4]);
                 double cardTips = Double.parseDouble(fields[5]);
-
+    
                 Shift shift = new Shift(date, type, hours, wage, cashTips, cardTips);
 
                 try {
-                    shiftDAO.insertShift(shift);
+                    shiftDAO.insertShift(userId, shift);
                     migrated++;
                 } catch (DuplicateShiftException e) {
                     System.out.println("Skipping duplicate: " + date + " " + type);

@@ -1,9 +1,107 @@
 const API_BASE = '/api/shifts';
 
 document.addEventListener('DOMContentLoaded', () => {
+    checkAuthStatus();
+
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
+    document.getElementById('register-form').addEventListener('submit', handleRegister);
+    document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    document.getElementById('show-register-btn').addEventListener('click', () => {
+        document.getElementById('login-form-container').style.display = 'none';
+        document.getElementById('register-form-container').style.display = 'block';
+    });
+    document.getElementById('show-login-btn').addEventListener('click', () => {
+        document.getElementById('register-form-container').style.display = 'none';
+        document.getElementById('login-form-container').style.display = 'block';
+    });
+
+    // your existing listeners stay here too:
     document.getElementById('add-shift-form').addEventListener('submit', handleAddShift);
     document.getElementById('load-data-btn').addEventListener('click', loadAllData);
 });
+
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/whoami');
+        if (response.ok) {
+            const data = await response.json();
+            showApp(data.username);
+        } else {
+            showAuthForms();
+        }
+    } catch (err) {
+        showAuthForms();
+    }
+}
+
+function showApp(username) {
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+    document.getElementById('current-username').textContent = username;
+}
+
+function showAuthForms() {
+    document.getElementById('auth-section').style.display = 'block';
+    document.getElementById('app-content').style.display = 'none';
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+    const messageEl = document.getElementById('login-message');
+
+    try {
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({ username, password })
+        });
+
+        if (response.ok) {
+            showApp(username);
+        } else {
+            messageEl.textContent = 'Invalid username or password.';
+        }
+    } catch (err) {
+        messageEl.textContent = 'Network error: ' + err.message;
+    }
+}
+
+async function handleRegister(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
+    const messageEl = document.getElementById('register-message');
+
+    try {
+        const response = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            messageEl.textContent = 'Registered! You can now log in.';
+            document.getElementById('show-login-btn').click();
+        } else {
+            messageEl.textContent = 'Error: ' + result.message;
+        }
+    } catch (err) {
+        messageEl.textContent = 'Network error: ' + err.message;
+    }
+}
+
+async function handleLogout() {
+    await fetch('/api/logout', { method: 'POST' });
+    document.getElementById('login-form').reset();
+    document.getElementById('register-form').reset();
+    showAuthForms();
+}
 
 async function handleAddShift(event) {
     event.preventDefault();

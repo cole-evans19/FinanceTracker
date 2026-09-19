@@ -1,6 +1,7 @@
 package com.bruburger.tracker;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,21 +18,28 @@ public class ShiftController {
         this.shiftDAO = shiftDAO;
     }
 
+    private int getUserId(Authentication authentication) {
+        return ((UserPrincipal) authentication.getPrincipal()).getId();
+    }
+
     @GetMapping
     public List<Shift> getShifts(
+        Authentication authentication,
             @RequestParam("start") String start,
             @RequestParam("end") String end) {
 
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
-        return shiftDAO.findShiftsBetween(startDate, endDate);
+        int userId = getUserId(authentication);
+        return shiftDAO.findShiftsBetween(userId, startDate, endDate);
     }
 
     @PostMapping
-    public ResponseEntityWrapper addShift(@RequestBody Shift shift) {
+    public ResponseEntityWrapper addShift(Authentication authentication, @RequestBody Shift shift) {
+        int userId = getUserId(authentication);
         try {
-            shiftDAO.insertShift(shift);
+            shiftDAO.insertShift(userId, shift);
             return new ResponseEntityWrapper("Shift added successfully.");
         } catch (DuplicateShiftException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
@@ -40,25 +48,26 @@ public class ShiftController {
 
     @DeleteMapping
     public ResponseEntityWrapper deleteShift(
+            Authentication authentication,
             @RequestParam("date") String date,
             @RequestParam("type") String type) {
 
-        LocalDate parsedDate = LocalDate.parse(date);
-        ShiftType parsedType = ShiftType.valueOf(type.toUpperCase());
-
-        shiftDAO.deleteShift(parsedDate, parsedType);
+        int userId = getUserId(authentication);
+        shiftDAO.deleteShift(userId, LocalDate.parse(date), ShiftType.valueOf(type.toUpperCase()));
         return new ResponseEntityWrapper("Delete request processed.");
     }
 
     @GetMapping("/summary")
     public ShiftSummary getSummary(
+            Authentication authentication,
             @RequestParam("start") String start,
             @RequestParam("end") String end) {
 
+        int userId = getUserId(authentication);
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
-        List<Shift> shifts = shiftDAO.findShiftsBetween(startDate, endDate);
+        List<Shift> shifts = shiftDAO.findShiftsBetween(userId, startDate, endDate);
 
         int shiftsWorked = shifts.size();
         double grossPay = 0;
@@ -87,13 +96,15 @@ public class ShiftController {
 
     @GetMapping("/profitability")
     public ProfitabilityResponse getProfitability(
+            Authentication authentication,        
             @RequestParam("start") String start,
             @RequestParam("end") String end) {
 
+        int userId = getUserId(authentication);
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
-        List<Shift> shifts = shiftDAO.findShiftsBetween(startDate, endDate);
+        List<Shift> shifts = shiftDAO.findShiftsBetween(userId, startDate, endDate);
 
         java.util.Map<String, double[]> statsMap = new java.util.HashMap<>();
         // [0] = totalGross, [1] = totalTips, [2] = count

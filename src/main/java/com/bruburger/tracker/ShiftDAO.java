@@ -13,21 +13,23 @@ import java.util.List;
 @Repository 
 public class ShiftDAO {
 
-    public void insertShift(Shift shift) throws DuplicateShiftException {
+    public void insertShift(int userId, Shift shift) throws DuplicateShiftException {
         String sql = """
-            INSERT INTO shifts (date, type, hours, wage, cash_tips, card_tips)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO shifts (user_id, date, type, hours, wage, cash_tips, card_tips)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDate(1, java.sql.Date.valueOf(shift.getDate()));
-            stmt.setString(2, shift.getType().toString());
-            stmt.setDouble(3, shift.getHours());
-            stmt.setDouble(4, shift.getWage());
-            stmt.setDouble(5, shift.getCashTips());
-            stmt.setDouble(6, shift.getCardTips());
+            
+            stmt.setInt(1, userId);
+            stmt.setDate(2, java.sql.Date.valueOf(shift.getDate()));
+            stmt.setString(3, shift.getType().toString());
+            stmt.setDouble(4, shift.getHours());
+            stmt.setDouble(5, shift.getWage());
+            stmt.setDouble(6, shift.getCashTips());
+            stmt.setDouble(7, shift.getCardTips());
 
             stmt.executeUpdate();
 
@@ -41,14 +43,15 @@ public class ShiftDAO {
         }
     }
 
-    public void deleteShift(LocalDate date, ShiftType type) {
-        String sql = "DELETE FROM shifts WHERE date = ? AND type = ?";
+    public void deleteShift(int userId, LocalDate date, ShiftType type) {
+        String sql = "DELETE FROM shifts WHERE user_id = ? AND date = ? AND type = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setDate(1, java.sql.Date.valueOf(date));
-            stmt.setString(2, type.toString());
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, userId);
+            stmt.setDate(2, java.sql.Date.valueOf(date));
+            stmt.setString(3, type.toString());
 
             stmt.executeUpdate();
 
@@ -57,15 +60,16 @@ public class ShiftDAO {
         }
     }
 
-    public List<Shift> findShiftsBetween(LocalDate startDate, LocalDate endDate) {
+    public List<Shift> findShiftsBetween(int userId, LocalDate startDate, LocalDate endDate) {
         List<Shift> shifts = new ArrayList<>();
-        String sql = "SELECT * FROM shifts WHERE date BETWEEN ? AND ? ORDER BY date";
+        String sql = "SELECT * FROM shifts WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDate(1, java.sql.Date.valueOf(startDate));
-            stmt.setDate(2, java.sql.Date.valueOf(endDate));
+            stmt.setInt(1, userId);
+            stmt.setDate(2, java.sql.Date.valueOf(startDate));
+            stmt.setDate(3, java.sql.Date.valueOf(endDate));
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {

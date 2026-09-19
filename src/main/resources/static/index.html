@@ -9,83 +9,122 @@
 
     <h1>Server Pay Tracker</h1>
 
-    <section id="add-shift-section">
-        <h2>Add a Shift</h2>
-        <form id="add-shift-form">
-            <label>
-                Date:
-                <input type="date" id="shift-date" required>
-            </label>
-            <label>
-                Type:
-                <select id="shift-type" required>
-                    <option value="MORNING">Morning</option>
-                    <option value="EVENING">Evening</option>
-                </select>
-            </label>
-            <label>
-                Hours:
-                <input type="number" id="shift-hours" step="0.1" min="0" required>
-            </label>
-            <label>
-                Wage:
-                <input type="number" id="shift-wage" step="0.01" min="0" required>
-            </label>
-            <label>
-                Cash Tips:
-                <input type="number" id="shift-cash-tips" step="0.01" min="0" required>
-            </label>
-            <label>
-                Card Tips:
-                <input type="number" id="shift-card-tips" step="0.01" min="0" required>
-            </label>
-            <button type="submit">Add Shift</button>
-        </form>
-        <p id="add-shift-message"></p>
+    <section id="auth-section">
+        <div id="login-form-container">
+            <h2>Log In</h2>
+            <form id="login-form">
+                <label>
+                    Username:
+                    <input type="text" id="login-username" required>
+                </label>
+                <label>
+                    Password:
+                    <input type="password" id="login-password" required>
+                </label>
+                <button type="submit">Log In</button>
+            </form>
+            <p id="login-message"></p>
+            <button id="show-register-btn">Need an account? Register</button>
+        </div>
+
+        <div id="register-form-container" style="display: none;">
+            <h2>Register</h2>
+            <form id="register-form">
+                <label>
+                    Username:
+                    <input type="text" id="register-username" required>
+                </label>
+                <label>
+                    Password:
+                    <input type="password" id="register-password" required>
+                </label>
+                <button type="submit">Register</button>
+            </form>
+            <p id="register-message"></p>
+            <button id="show-login-btn">Already have an account? Log in</button>
+        </div>
     </section>
 
-    <section id="date-range-section">
-        <h2>View Range</h2>
-        <label>
-            Start:
-            <input type="date" id="range-start">
-        </label>
-        <label>
-            End:
-            <input type="date" id="range-end">
-        </label>
-        <button id="load-data-btn">Load Data</button>
-    </section>
+    <div id="app-content" style="display: none;">
+        <p>Logged in as <span id="current-username"></span> - <button id="logout-btn">Log Out</button></p>
+        <section id="add-shift-section">
+            <h2>Add a Shift</h2>
+            <form id="add-shift-form">
+                <label>
+                    Date:
+                    <input type="date" id="shift-date" required>
+                </label>
+                <label>
+                    Type:
+                    <select id="shift-type" required>
+                        <option value="MORNING">Morning</option>
+                        <option value="EVENING">Evening</option>
+                    </select>
+                </label>
+                <label>
+                    Hours:
+                    <input type="number" id="shift-hours" step="0.1" min="0" required>
+                </label>
+                <label>
+                    Wage:
+                    <input type="number" id="shift-wage" step="0.01" min="0" required>
+                </label>
+                <label>
+                    Cash Tips:
+                    <input type="number" id="shift-cash-tips" step="0.01" min="0" required>
+                </label>
+                <label>
+                    Card Tips:
+                    <input type="number" id="shift-card-tips" step="0.01" min="0" required>
+                </label>
+                <button type="submit">Add Shift</button>
+            </form>
+            <p id="add-shift-message"></p>
+        </section>
 
-    <section id="summary-section">
-        <h2>Summary</h2>
-        <div id="summary-output">No data loaded yet.</div>
-    </section>
+        <section id="date-range-section">
+            <h2>View Range</h2>
+            <label>
+                Start:
+                <input type="date" id="range-start">
+            </label>
+            <label>
+                End:
+                <input type="date" id="range-end">
+            </label>
+            <button id="load-data-btn">Load Data</button>
+        </section>
 
-    <section id="profitability-section">
-        <h2>Profitability</h2>
-        <div id="profitability-output">No data loaded yet.</div>
-    </section>
+        <section id="summary-section">
+            <h2>Summary</h2>
+            <div id="summary-output">No data loaded yet.</div>
+        </section>
 
-    <section id="shifts-list-section">
-        <h2>Shifts in Range</h2>
-        <table id="shifts-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Hours</th>
-                    <th>Wage</th>
-                    <th>Cash Tips</th>
-                    <th>Card Tips</th>
-                    <th>Gross Pay</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody id="shifts-table-body">
-            </tbody>
-        </table>
-    </section>
+        <section id="profitability-section">
+            <h2>Profitability</h2>
+            <div id="profitability-output">No data loaded yet.</div>
+        </section>
+
+        <section id="shifts-list-section">
+            <h2>Shifts in Range</h2>
+            <table id="shifts-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Hours</th>
+                        <th>Wage</th>
+                        <th>Cash Tips</th>
+                        <th>Card Tips</th>
+                        <th>Gross Pay</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="shifts-table-body">
+                </tbody>
+            </table>
+        </section>
+    </div>
 
     <script src="app.js"></script>
 </body>

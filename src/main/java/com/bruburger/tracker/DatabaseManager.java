@@ -19,13 +19,22 @@ public class DatabaseManager {
         String createTableSQL = """
             CREATE TABLE IF NOT EXISTS shifts (
                 id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
                 date DATE NOT NULL,
                 type TEXT NOT NULL,
                 hours DOUBLE PRECISION NOT NULL,
                 wage DOUBLE PRECISION NOT NULL,
                 cash_tips DOUBLE PRECISION NOT NULL,
                 card_tips DOUBLE PRECISION NOT NULL,
-                UNIQUE(date, type)
+                UNIQUE(user_id, date, type)
+            );
+            """;
+
+        String createUsersTableSQL = """
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL
             );
             """;
 
@@ -33,6 +42,7 @@ public class DatabaseManager {
              Statement stmt = conn.createStatement()) {
 
             stmt.execute(createTableSQL);
+            stmt.execute(createUsersTableSQL);
 
         } catch (SQLException e) {
             System.out.println("Error initializing database: " + e.getMessage());

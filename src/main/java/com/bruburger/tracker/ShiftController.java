@@ -118,7 +118,7 @@ public class ShiftController {
         // [0] = totalGross, [1] = totalTips, [2] = count
 
         for (Shift shift : shifts) {
-            String key = shift.getDate().getDayOfWeek() + " " + shift.getType();
+            String key = shift.getDate().getDayOfWeek() + " " + shift.getType() + " " + shift.getRole();
             double[] stats = statsMap.computeIfAbsent(key, k -> new double[3]);
             stats[0] += shift.getGrossPay();
             stats[1] += shift.getTotalTips();
@@ -131,7 +131,7 @@ public class ShiftController {
             double[] stats = entry.getValue();
             int count = (int) stats[2];
             ranked.add(new ProfitabilityEntry(
-                parts[0], parts[1],
+                parts[0], parts[1], parts[3],
                 stats[0] / count,
                 stats[1] / count,
                 count

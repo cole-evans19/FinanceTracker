@@ -209,7 +209,8 @@ async function handleAddShift(event) {
         hours: parseFloat(document.getElementById('shift-hours').value),
         wage: parseFloat(document.getElementById('shift-wage').value),
         cashTips: parseFloat(document.getElementById('shift-cash-tips').value),
-        cardTips: parseFloat(document.getElementById('shift-card-tips').value)
+        cardTips: parseFloat(document.getElementById('shift-card-tips').value),
+        role: document.getElementById('shift-role').value
     };
 
     const messageEl = document.getElementById('add-shift-message');
@@ -320,6 +321,7 @@ async function loadShiftsTable(start, end) {
                 <tr>
                     <td>${shift.date}</td>
                     <td>${shift.type}</td>
+                    <td>${shift.role}</td>
                     <td>${shift.hours}</td>
                     <td>${shift.wage}</td>
                     <td>${shift.cashTips}</td>

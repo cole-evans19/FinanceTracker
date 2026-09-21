@@ -15,8 +15,8 @@ public class ShiftDAO {
 
     public void insertShift(int userId, int jobId, Shift shift) throws DuplicateShiftException {
         String sql = """
-            INSERT INTO shifts (user_id, job_id, date, type, hours, wage, cash_tips, card_tips)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO shifts (user_id, job_id, date, type, hours, wage, cash_tips, card_tips, role)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -31,6 +31,7 @@ public class ShiftDAO {
             stmt.setDouble(6, shift.getWage());
             stmt.setDouble(7, shift.getCashTips());
             stmt.setDouble(8, shift.getCardTips());
+            stmt.setString(9, shift.getRole());
 
             stmt.executeUpdate();
 
@@ -94,7 +95,8 @@ public class ShiftDAO {
             rs.getDouble("hours"),
             rs.getDouble("wage"),
             rs.getDouble("cash_tips"),
-            rs.getDouble("card_tips")
+            rs.getDouble("card_tips"),
+            rs.getString("role")
         );
     }
 }

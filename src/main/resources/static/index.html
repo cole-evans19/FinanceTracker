@@ -71,6 +71,18 @@
                     </select>
                 </label>
                 <label>
+                    Role:
+                    <input type="text" id="shift-role" list="role-suggestions" required>
+                    <datalist id="role-suggestions">
+                        <option value="Server">
+                        <option value="Bartender">
+                        <option value="Busser">
+                        <option value="Expo">
+                        <option value="Host">
+                        <option value="Manager">
+                    </datalist>
+                </label>
+                <label>
                     Hours:
                     <input type="number" id="shift-hours" step="0.1" min="0" required>
                 </label>
@@ -130,6 +142,7 @@
                     <tr>
                         <th>Date</th>
                         <th>Type</th>
+                        <th>Role</th>
                         <th>Hours</th>
                         <th>Wage</th>
                         <th>Cash Tips</th>

@@ -46,7 +46,7 @@
     </section>
 
     <div id="app-content" style="display: none;">
-        <p>Logged in as <span id="current-username"></span> - <button id="logout-btn">Log Out</button></p>
+        <p>Welcome, <span id="current-username"></span> - <button id="logout-btn">Log Out</button></p>
         <section id="add-shift-section">
             <h2>Add a Shift</h2>
             <form id="add-shift-form">
@@ -83,16 +83,25 @@
         </section>
 
         <section id="date-range-section">
-            <h2>View Range</h2>
-            <label>
-                Start:
-                <input type="date" id="range-start">
-            </label>
-            <label>
-                End:
-                <input type="date" id="range-end">
-            </label>
-            <button id="load-data-btn">Load Data</button>
+            <h2>Change Date Range</h2>
+
+                <div id="quick-range-buttons">
+                    <button type="button" class="quick-range-btn" data-months="1">1 Month</button>
+                    <button type="button" class="quick-range-btn" data-months="3">3 Months</button>
+                    <button type="button" class="quick-range-btn" data-months="6">6 Months</button>
+                    <button type="button" class="quick-range-btn" data-months="12">1 Year</button>
+                </div>
+
+            <h3>Custom Range</h3>
+                <label>
+                    Start:
+                    <input type="date" id="range-start">
+                </label>
+                <label>
+                    End:
+                    <input type="date" id="range-end">
+                </label>
+                <button id="load-data-btn">Load Data</button>
         </section>
 
         <section id="summary-section">

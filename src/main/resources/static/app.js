@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('login-form-container').style.display = 'block';
     });
 
+    document.querySelectorAll('.quick-range-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            selectQuickRange(parseInt(btn.dataset.months));
+        });
+    });
+
     // your existing listeners stay here too:
     document.getElementById('add-shift-form').addEventListener('submit', handleAddShift);
     document.getElementById('load-data-btn').addEventListener('click', loadAllData);
@@ -34,10 +40,38 @@ async function checkAuthStatus() {
     }
 }
 
+function getRangeMonthsAgo(months) {
+    const end = new Date();
+    const start = new Date();
+    start.setMonth(start.getMonth() - months);
+
+    const format = (d) => d.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    return { start: format(start), end: format(end) };
+}
+
+function selectQuickRange(months) {
+    const { start, end } = getRangeMonthsAgo(months);
+    document.getElementById('range-start').value = start;
+    document.getElementById('range-end').value = end;
+
+    setActiveQuickButton(months);
+    loadAllData();
+}
+
+function setActiveQuickButton(months) {
+    document.querySelectorAll('.quick-range-btn').forEach(btn => {
+        const isActive = parseInt(btn.dataset.months) === months;
+        btn.style.fontWeight = isActive ? 'bold' : 'normal';
+    });
+}
+
 function showApp(username) {
     document.getElementById('auth-section').style.display = 'none';
     document.getElementById('app-content').style.display = 'block';
     document.getElementById('current-username').textContent = username;
+
+    selectQuickRange(1);
 }
 
 function showAuthForms() {

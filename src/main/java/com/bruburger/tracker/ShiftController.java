@@ -24,7 +24,8 @@ public class ShiftController {
 
     @GetMapping
     public List<Shift> getShifts(
-        Authentication authentication,
+            Authentication authentication,
+            @RequestParam("jobId") int jobId,
             @RequestParam("start") String start,
             @RequestParam("end") String end) {
 
@@ -32,14 +33,18 @@ public class ShiftController {
         LocalDate endDate = LocalDate.parse(end);
 
         int userId = getUserId(authentication);
-        return shiftDAO.findShiftsBetween(userId, startDate, endDate);
+        return shiftDAO.findShiftsBetween(userId, jobId, startDate, endDate);
     }
 
     @PostMapping
-    public ResponseEntityWrapper addShift(Authentication authentication, @RequestBody Shift shift) {
+    public ResponseEntityWrapper addShift(
+            Authentication authentication, 
+            @RequestParam("jobId") int jobId,
+            @RequestBody Shift shift) {
+
         int userId = getUserId(authentication);
         try {
-            shiftDAO.insertShift(userId, shift);
+            shiftDAO.insertShift(userId, jobId, shift);
             return new ResponseEntityWrapper("Shift added successfully.");
         } catch (DuplicateShiftException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
@@ -49,17 +54,19 @@ public class ShiftController {
     @DeleteMapping
     public ResponseEntityWrapper deleteShift(
             Authentication authentication,
+            @RequestParam("jobId") int jobId, 
             @RequestParam("date") String date,
             @RequestParam("type") String type) {
 
         int userId = getUserId(authentication);
-        shiftDAO.deleteShift(userId, LocalDate.parse(date), ShiftType.valueOf(type.toUpperCase()));
+        shiftDAO.deleteShift(userId, jobId, LocalDate.parse(date), ShiftType.valueOf(type.toUpperCase()));
         return new ResponseEntityWrapper("Delete request processed.");
     }
 
     @GetMapping("/summary")
     public ShiftSummary getSummary(
             Authentication authentication,
+            @RequestParam("jobId") int jobId,
             @RequestParam("start") String start,
             @RequestParam("end") String end) {
 
@@ -67,7 +74,7 @@ public class ShiftController {
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
-        List<Shift> shifts = shiftDAO.findShiftsBetween(userId, startDate, endDate);
+        List<Shift> shifts = shiftDAO.findShiftsBetween(userId, jobId, startDate, endDate);
 
         int shiftsWorked = shifts.size();
         double grossPay = 0;
@@ -96,7 +103,8 @@ public class ShiftController {
 
     @GetMapping("/profitability")
     public ProfitabilityResponse getProfitability(
-            Authentication authentication,        
+            Authentication authentication,  
+            @RequestParam("jobId") int jobId,      
             @RequestParam("start") String start,
             @RequestParam("end") String end) {
 
@@ -104,7 +112,7 @@ public class ShiftController {
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
-        List<Shift> shifts = shiftDAO.findShiftsBetween(userId, startDate, endDate);
+        List<Shift> shifts = shiftDAO.findShiftsBetween(userId, jobId, startDate, endDate);
 
         java.util.Map<String, double[]> statsMap = new java.util.HashMap<>();
         // [0] = totalGross, [1] = totalTips, [2] = count

@@ -1,4 +1,5 @@
 const API_BASE = '/api/shifts';
+let currentJobId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthStatus();
@@ -6,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     document.getElementById('register-form').addEventListener('submit', handleRegister);
     document.getElementById('logout-btn').addEventListener('click', handleLogout);
+    document.getElementById('job-select').addEventListener('change', handleJobChange);
+    document.getElementById('add-job-form').addEventListener('submit', handleAddJob);
     document.getElementById('show-register-btn').addEventListener('click', () => {
         document.getElementById('login-form-container').style.display = 'none';
         document.getElementById('register-form-container').style.display = 'block';
@@ -40,6 +43,65 @@ async function checkAuthStatus() {
     }
 }
 
+async function loadJobs(selectJobId = null) {
+    const select = document.getElementById('job-select');
+
+    try {
+        const response = await fetch('/api/jobs');
+        const jobs = await response.json();
+
+        if (jobs.length === 0) {
+            select.innerHTML = '<option value="">No jobs yet — add one below</option>';
+            currentJobId = null;
+            return;
+        }
+
+        select.innerHTML = jobs.map(job =>
+            `<option value="${job.id}">${job.name}</option>`
+        ).join('');
+
+        const jobToSelect = selectJobId ?? jobs[0].id;
+        select.value = jobToSelect;
+        currentJobId = jobToSelect;
+
+    } catch (err) {
+        select.innerHTML = '<option value="">Failed to load jobs</option>';
+    }
+}
+
+function handleJobChange(event) {
+    currentJobId = parseInt(event.target.value);
+    if (currentJobId) {
+        loadAllData();
+    }
+}
+
+async function handleAddJob(event) {
+    event.preventDefault();
+
+    const nameInput = document.getElementById('new-job-name');
+    const name = nameInput.value;
+
+    try {
+        const response = await fetch('/api/jobs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+        });
+
+        if (response.ok) {
+            const newJob = await response.json();
+            nameInput.value = '';
+            await loadJobs(newJob.id); // reload dropdown, auto-select the new job
+            loadAllData();
+        } else {
+            alert('Failed to add job — name may already exist.');
+        }
+    } catch (err) {
+        alert('Network error: ' + err.message);
+    }
+}
+
 function getRangeMonthsAgo(months) {
     const end = new Date();
     const start = new Date();
@@ -66,11 +128,12 @@ function setActiveQuickButton(months) {
     });
 }
 
-function showApp(username) {
+async function showApp(username) {
     document.getElementById('auth-section').style.display = 'none';
     document.getElementById('app-content').style.display = 'block';
     document.getElementById('current-username').textContent = username;
 
+    await loadJobs();
     selectQuickRange(1);
 }
 
@@ -152,7 +215,7 @@ async function handleAddShift(event) {
     const messageEl = document.getElementById('add-shift-message');
 
     try {
-        const response = await fetch(API_BASE, {
+        const response = await fetch(`${API_BASE}?jobId=${currentJobId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(shift)
@@ -187,6 +250,10 @@ async function loadAllData() {
     const start = document.getElementById('range-start').value;
     const end = document.getElementById('range-end').value;
 
+    if(!currentJobId) {
+        return;
+    }
+
     if (!start || !end) {
         alert('Please choose both a start and end date.');
         return;
@@ -202,7 +269,7 @@ async function loadAllData() {
 async function loadSummary(start, end) {
     const output = document.getElementById('summary-output');
     try {
-        const response = await fetch(`${API_BASE}/summary?start=${start}&end=${end}`);
+        const response = await fetch(`${API_BASE}/summary?jobId=${currentJobId}&start=${start}&end=${end}`);
         const data = await response.json();
 
         output.innerHTML = `
@@ -222,7 +289,7 @@ async function loadSummary(start, end) {
 async function loadProfitability(start, end) {
     const output = document.getElementById('profitability-output');
     try {
-        const response = await fetch(`${API_BASE}/profitability?start=${start}&end=${end}`);
+        const response = await fetch(`${API_BASE}/profitability?jobId=${currentJobId}&start=${start}&end=${end}`);
         const data = await response.json();
 
         const renderEntries = (entries) =>
@@ -244,7 +311,7 @@ async function loadProfitability(start, end) {
 async function loadShiftsTable(start, end) {
     const tbody = document.getElementById('shifts-table-body');
     try {
-        const response = await fetch(`${API_BASE}?start=${start}&end=${end}`);
+        const response = await fetch(`${API_BASE}?jobId=${currentJobId}&start=${start}&end=${end}`);
         const shifts = await response.json();
 
         tbody.innerHTML = shifts.map(shift => {
@@ -272,7 +339,7 @@ async function handleDeleteShift(date, type) {
     if (!confirm(`Delete the ${type} shift on ${date}?`)) return;
 
     try {
-        const response = await fetch(`${API_BASE}?date=${date}&type=${type}`, {
+        const response = await fetch(`${API_BASE}?jobId=${currentJobId}&?date=${date}&type=${type}`, {
             method: 'DELETE'
         });
 

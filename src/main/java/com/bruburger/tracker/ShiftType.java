@@ -1,4 +1,4 @@
 package com.bruburger.tracker;
 public enum ShiftType {
-    MORNING, EVENING
+    MORNING, AFTERNOON, EVENING, NIGHT
 }

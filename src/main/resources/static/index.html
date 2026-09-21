@@ -47,6 +47,15 @@
 
     <div id="app-content" style="display: none;">
         <p>Welcome, <span id="current-username"></span> - <button id="logout-btn">Log Out</button></p>
+        <section id="job-section">
+            <h2>Job</h2>
+            <select id="job-select"></select>
+
+            <form id="add-job-form">
+                <input type="text" id="new-job-name" placeholder="New Job Name" required>
+                <button type="submit">Add Job</button>
+            </form>
+        </section>
         <section id="add-shift-section">
             <h2>Add a Shift</h2>
             <form id="add-shift-form">

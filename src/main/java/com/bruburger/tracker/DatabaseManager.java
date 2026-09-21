@@ -38,11 +38,21 @@ public class DatabaseManager {
             );
             """;
 
+        String createJobsTableSQL = """
+            CREATE TABLE IF NOT EXISTS jobs (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                name TEXT NOT NULL,
+                UNIQUE(user_id, name)
+            );
+            """;
+
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
             stmt.execute(createTableSQL);
             stmt.execute(createUsersTableSQL);
+            stmt.execute(createJobsTableSQL);
 
         } catch (SQLException e) {
             System.out.println("Error initializing database: " + e.getMessage());

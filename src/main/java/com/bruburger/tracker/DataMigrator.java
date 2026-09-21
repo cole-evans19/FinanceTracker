@@ -1,3 +1,4 @@
+/*
 package com.bruburger.tracker;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -12,6 +13,10 @@ import java.time.LocalDate;
 //Sidenote, reused this again after I switched ShiftDOA to point
 //at supabase instead of SQLite. 
 
+
+
+
+-----Tired of updating this forever. Will dust off if needed again?---------------------
 public class DataMigrator {
 
     public static void main(String[] args) {
@@ -60,3 +65,4 @@ public class DataMigrator {
         System.out.println("Migration complete. Migrated: " + migrated + ", Skipped: " + skipped);
     }
 }
+*/

@@ -1,7 +1,9 @@
 package com.bruburger.tracker;
 
 import org.springframework.stereotype.Repository;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.Map;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,10 +15,12 @@ import java.util.List;
 @Repository 
 public class ShiftDAO {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public void insertShift(int userId, int jobId, Shift shift) throws DuplicateShiftException {
         String sql = """
-            INSERT INTO shifts (user_id, job_id, date, type, hours, wage, cash_tips, card_tips, role)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO shifts (user_id, job_id, date, type, hours, wage, cash_tips, card_tips, role, custom_attributes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb)
             """;
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -33,6 +37,11 @@ public class ShiftDAO {
             stmt.setDouble(8, shift.getCardTips());
             stmt.setString(9, shift.getRole());
 
+            String customAttributesJson = shift.getCustomAttributes() != null
+                ? objectMapper.writeValueAsString(shift.getCustomAttributes())
+                : null;
+            stmt.setString(10, customAttributesJson);
+
             stmt.executeUpdate();
 
         } catch (SQLException e) {
@@ -42,6 +51,8 @@ public class ShiftDAO {
                 );
             }
             System.out.println("Error inserting shift: " + e.getMessage());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            System.out.println("Error serializing custom attributes: " + e.getMessage());
         }
     }
 
@@ -89,7 +100,7 @@ public class ShiftDAO {
     }
 
     private Shift mapRowToShift(ResultSet rs) throws SQLException {
-        return new Shift(
+        Shift shift = new Shift(
             rs.getDate("date").toLocalDate(),
             ShiftType.valueOf(rs.getString("type")),
             rs.getDouble("hours"),
@@ -98,5 +109,19 @@ public class ShiftDAO {
             rs.getDouble("card_tips"),
             rs.getString("role")
         );
+
+        String customAttributesJson = rs.getString("custom_attributes");
+        if (customAttributesJson != null) {
+            try {
+                Map<String, String> customAttributes = objectMapper.readValue(
+                    customAttributesJson,
+                    new TypeReference<Map<String, String>>() {}
+                );
+                shift.setCustomAttributes(customAttributes);
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                System.out.println("Error parsing custom attributes: " + e.getMessage());
+            }
+        }
+        return shift;
     }
 }

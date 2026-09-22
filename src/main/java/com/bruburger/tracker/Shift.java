@@ -1,5 +1,6 @@
 package com.bruburger.tracker;
 import java.time.LocalDate;
+import java.util.Map;
 
 public class Shift {
     private LocalDate date;
@@ -9,6 +10,7 @@ public class Shift {
     private double wage;
     private double cashTips;
     private double cardTips;
+    private Map<String, String> customAttributes;
 
 
     public Shift() {
@@ -51,6 +53,14 @@ public class Shift {
 
     public ShiftType getType() {
         return type;
+    }
+
+    public Map<String, String> getCustomAttributes() {
+        return customAttributes;
+    }
+
+    public void setCustomAttributes(Map<String, String> customAttributes) {
+        this.customAttributes = customAttributes;
     }
 
     public void setType(ShiftType type) {

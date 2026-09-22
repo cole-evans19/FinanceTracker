@@ -98,6 +98,11 @@
                     Card Tips:
                     <input type="number" id="shift-card-tips" step="0.01" min="0" required>
                 </label>
+                <div id="custom-attributes-container">
+                    <h3>Custom Fields (optional)</h3>
+                    <div id="custom-attributes-list"></div>
+                    <button type="button" id="add-custom-field-btn">+ Add Custom Field</button>
+                </div>
                 <button type="submit">Add Shift</button>
             </form>
             <p id="add-shift-message"></p>
@@ -132,14 +137,27 @@
 
         <section id="profitability-section">
             <h2>Profitability</h2>
+            <label>
+                Minimum shifts to include:
+                <input type="number" id="min-shifts-input" value="1" min="1">
+            </label>
             <div id="profitability-output">No data loaded yet.</div>
         </section>
 
+        <section id="attribute-profitability-section" style="display: none;">
+            <h2>Attribute Profitability</h2>
+            <label>
+                Minimum Shifts to include:
+                <input type="number" id="attribute-min-shifts-input" value="1" min="1">
+            </label>
+            <div id="attribute-profitability-output"></div>
+        </section>
+
         <section id="shifts-list-section">
-            <h2>Shifts in Range</h2>
+            <h2>Complete Shift Index</h2>
             <table id="shifts-table">
                 <thead>
-                    <tr>
+                    <tr id="shifts-table-header-row">
                         <th>Date</th>
                         <th>Type</th>
                         <th>Role</th>

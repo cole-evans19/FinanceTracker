@@ -106,7 +106,8 @@ public class ShiftController {
             Authentication authentication,  
             @RequestParam("jobId") int jobId,      
             @RequestParam("start") String start,
-            @RequestParam("end") String end) {
+            @RequestParam("end") String end,
+            @RequestParam(value = "minShifts", defaultValue = "1") int minShifts) {
 
         int userId = getUserId(authentication);
         LocalDate startDate = LocalDate.parse(start);
@@ -118,7 +119,7 @@ public class ShiftController {
         // [0] = totalGross, [1] = totalTips, [2] = count
 
         for (Shift shift : shifts) {
-            String key = shift.getDate().getDayOfWeek() + " " + shift.getType() + " " + shift.getRole();
+            String key = shift.getDate().getDayOfWeek() + "|" + shift.getType() + "|" + shift.getRole();
             double[] stats = statsMap.computeIfAbsent(key, k -> new double[3]);
             stats[0] += shift.getGrossPay();
             stats[1] += shift.getTotalTips();
@@ -127,11 +128,14 @@ public class ShiftController {
 
         List<ProfitabilityEntry> ranked = new java.util.ArrayList<>();
         for (var entry : statsMap.entrySet()) {
-            String[] parts = entry.getKey().split(" ");
+            String[] parts = entry.getKey().split("\\|");
             double[] stats = entry.getValue();
             int count = (int) stats[2];
+
+            if(count < minShifts) continue;
+            
             ranked.add(new ProfitabilityEntry(
-                parts[0], parts[1], parts[3],
+                parts[0], parts[1], parts[2],
                 stats[0] / count,
                 stats[1] / count,
                 count
@@ -149,4 +153,69 @@ public class ShiftController {
 
     // small helper record for simple JSON success messages
     public record ResponseEntityWrapper(String message) {}
+
+    private String normalize(String s) {
+        return s.toLowerCase().trim().replaceAll("\\s+", " ");
+    }
+
+    public record AttributeValueEntry(String value, double avgGross, double avgTips, int count) {}
+    public record AttributeKeyGroup(String key, List<AttributeValueEntry> values) {}
+
+    @GetMapping("/attribute-profitability")
+    public List<AttributeKeyGroup> getAttributeProfitability(
+            Authentication authentication,
+            @RequestParam("jobId") int jobId,
+            @RequestParam("start") String start,
+            @RequestParam("end") String end,
+            @RequestParam(value = "minShifts", defaultValue = "1") int minShifts) {
+
+        int userId = getUserId(authentication);
+        List<Shift> shifts = shiftDAO.findShiftsBetween(userId, jobId, LocalDate.parse(start), LocalDate.parse(end));
+
+        // key -> value -> [totalGross, totalTips, count]
+        java.util.Map<String, java.util.Map<String, double[]>> statsByKey = new java.util.HashMap<>();
+
+        for (Shift shift : shifts) {
+            java.util.Map<String, String> attrs = shift.getCustomAttributes();
+            if (attrs == null) continue;
+
+            for (var entry : attrs.entrySet()) {
+                String key = normalize(entry.getKey());
+                String value = normalize(entry.getValue());
+                if (key.isEmpty() || value.isEmpty()) continue;
+
+                double[] stats = statsByKey
+                    .computeIfAbsent(key, k -> new java.util.HashMap<>())
+                    .computeIfAbsent(value, v -> new double[3]);
+
+                stats[0] += shift.getGrossPay();
+                stats[1] += shift.getTotalTips();
+                stats[2] += 1;
+            }
+        }
+
+        List<AttributeKeyGroup> result = new java.util.ArrayList<>();
+
+        for (var keyEntry : statsByKey.entrySet()) {
+            List<AttributeValueEntry> values = new java.util.ArrayList<>();
+
+            for (var valueEntry : keyEntry.getValue().entrySet()) {
+                double[] stats = valueEntry.getValue();
+                int count = (int) stats[2];
+                if (count < minShifts) continue;
+
+                values.add(new AttributeValueEntry(valueEntry.getKey(), stats[0] / count, stats[1] / count, count));
+            }
+
+            if (values.isEmpty()) continue;
+
+            values.sort((a, b) -> Double.compare(b.avgGross(), a.avgGross()));
+            result.add(new AttributeKeyGroup(keyEntry.getKey(), values));
+        }
+
+        result.sort(java.util.Comparator.comparing(AttributeKeyGroup::key));
+
+        return result;
+    }
 }
+

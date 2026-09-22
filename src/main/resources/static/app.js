@@ -1,5 +1,6 @@
 const API_BASE = '/api/shifts';
 let currentJobId = null;
+let customFieldCount = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthStatus();
@@ -9,6 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('logout-btn').addEventListener('click', handleLogout);
     document.getElementById('job-select').addEventListener('change', handleJobChange);
     document.getElementById('add-job-form').addEventListener('submit', handleAddJob);
+    document.getElementById('add-custom-field-btn').addEventListener('click', addCustomFieldRow);
+    document.getElementById('attribute-min-shifts-input').addEventListener('change', () => {
+        if (currentJobId) loadAllData();
+    });
+    document.getElementById('min-shifts-input').addEventListener('change', () => {
+        if (currentJobId) loadAllData();
+    });
     document.getElementById('show-register-btn').addEventListener('click', () => {
         document.getElementById('login-form-container').style.display = 'none';
         document.getElementById('register-form-container').style.display = 'block';
@@ -24,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // your existing listeners stay here too:
     document.getElementById('add-shift-form').addEventListener('submit', handleAddShift);
     document.getElementById('load-data-btn').addEventListener('click', loadAllData);
 });
@@ -210,7 +217,8 @@ async function handleAddShift(event) {
         wage: parseFloat(document.getElementById('shift-wage').value),
         cashTips: parseFloat(document.getElementById('shift-cash-tips').value),
         cardTips: parseFloat(document.getElementById('shift-card-tips').value),
-        role: document.getElementById('shift-role').value
+        role: document.getElementById('shift-role').value,
+        customAttributes: collectCustomAttributes()
     };
 
     const messageEl = document.getElementById('add-shift-message');
@@ -236,8 +244,8 @@ async function handleAddShift(event) {
         const result = await response.json();
         messageEl.textContent = result.message;
         document.getElementById('add-shift-form').reset();
+        clearCustomFieldRows();
 
-        // Refresh the displayed data if a range is already loaded
         if (document.getElementById('range-start').value && document.getElementById('range-end').value) {
             loadAllData();
         }
@@ -263,6 +271,7 @@ async function loadAllData() {
     await Promise.all([
         loadSummary(start, end),
         loadProfitability(start, end),
+        loadAttributeProfitability(start, end),
         loadShiftsTable(start, end)
     ]);
 }
@@ -289,13 +298,14 @@ async function loadSummary(start, end) {
 
 async function loadProfitability(start, end) {
     const output = document.getElementById('profitability-output');
+    const minShifts = document.getElementById('min-shifts-input').value || 1;
     try {
-        const response = await fetch(`${API_BASE}/profitability?jobId=${currentJobId}&start=${start}&end=${end}`);
+        const response = await fetch(`${API_BASE}/profitability?jobId=${currentJobId}&start=${start}&end=${end}&minShifts=${minShifts}`);
         const data = await response.json();
 
         const renderEntries = (entries) =>
             entries.map(e =>
-                `<li>${e.dayOfWeek} ${e.shiftType} — Avg Gross: $${e.avgGross.toFixed(2)}, Avg Tips: $${e.avgTips.toFixed(2)} (${e.count} shifts)</li>`
+                `<li>${e.dayOfWeek} ${e.shiftType} (${e.role}) — Avg Gross: $${e.avgGross.toFixed(2)}, Avg Tips: $${e.avgTips.toFixed(2)} — based on ${e.count} shift${e.count === 1 ? '' : 's'}</li>`
             ).join('');
 
         output.innerHTML = `
@@ -315,18 +325,27 @@ async function loadShiftsTable(start, end) {
         const response = await fetch(`${API_BASE}?jobId=${currentJobId}&start=${start}&end=${end}`);
         const shifts = await response.json();
 
+        const customKeys = getUniqueCustomKeys(shifts);
+        renderTableHeader(customKeys);
+
         tbody.innerHTML = shifts.map(shift => {
             const grossPay = (shift.hours * shift.wage) + shift.cashTips + shift.cardTips;
+
+            const customCells = customKeys.map(key => {
+                const value = shift.customAttributes?.[key];
+                return `<td>${value ?? '—'}</td>`;
+            }).join('');
+
             return `
                 <tr>
                     <td>${shift.date}</td>
                     <td>${shift.type}</td>
-                    <td>${shift.role}</td>
                     <td>${shift.hours}</td>
                     <td>${shift.wage}</td>
                     <td>${shift.cashTips}</td>
                     <td>${shift.cardTips}</td>
                     <td>$${grossPay.toFixed(2)}</td>
+                    ${customCells}
                     <td><button onclick="handleDeleteShift('${shift.date}', '${shift.type}')">Delete</button></td>
                 </tr>
             `;
@@ -335,6 +354,30 @@ async function loadShiftsTable(start, end) {
     } catch (err) {
         tbody.innerHTML = `<tr><td colspan="8">Failed to load shifts: ${err.message}</td></tr>`;
     }
+}
+
+function getUniqueCustomKeys(shifts) {
+    const keySet = new Set();
+
+    shifts.forEach(shift => {
+        if (shift.customAttributes) {
+            Object.keys(shift.customAttributes).forEach(key => keySet.add(key));
+        }
+    });
+
+    return Array.from(keySet).sort();
+}
+
+function renderTableHeader(customKeys) {
+    const headerRow = document.getElementById('shifts-table-header-row');
+    const baseHeaders = ['Date', 'Type', 'Hours', 'Wage', 'Cash Tips', 'Card Tips', 'Gross Pay'];
+
+    const allHeadersHtml =
+        baseHeaders.map(h => `<th>${h}</th>`).join('') +
+        customKeys.map(key => `<th>${key}</th>`).join('') +
+        `<th></th>`; // trailing column for the Delete button
+
+    headerRow.innerHTML = allHeadersHtml;
 }
 
 async function handleDeleteShift(date, type) {
@@ -353,4 +396,68 @@ async function handleDeleteShift(date, type) {
     } catch (err) {
         alert('Network error: ' + err.message);
     }
+}
+
+async function loadAttributeProfitability(start, end) {
+    const section = document.getElementById('attribute-profitability-section');
+    const output = document.getElementById('attribute-profitability-output');
+    const minShifts = document.getElementById('attribute-min-shifts-input').value || 1;
+
+    try {
+        const response = await fetch(`${API_BASE}/attribute-profitability?jobId=${currentJobId}&start=${start}&end=${end}&minShifts=${minShifts}`);
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        output.innerHTML = data.map(group => `
+            <h3>${group.key}</h3>
+            <ul>
+                ${group.values.map(v =>
+                    `<li>${v.value} — Avg Gross: $${v.avgGross.toFixed(2)}, Avg Tips: $${v.avgTips.toFixed(2)} (${v.count} shift${v.count === 1 ? '' : 's'})</li>`
+                ).join('')}
+            </ul>
+        `).join('');
+
+    } catch (err) {
+        section.style.display = 'block';
+        output.textContent = 'Failed to load attribute profitability: ' + err.message;
+    }
+}
+
+function addCustomFieldRow() {
+    const container = document.getElementById('custom-attributes-list');
+    const rowId = `custom-field-${customFieldCount++}`;
+
+    const row = document.createElement('div');
+    row.id = rowId;
+    row.innerHTML = `
+        <input type="text" placeholder="Field name (e.g. hair style)" class="custom-key">
+        <input type="text" placeholder="Value (e.g. curled)" class="custom-value">
+        <button type="button" onclick="document.getElementById('${rowId}').remove()">Remove</button>
+    `;
+
+    container.appendChild(row);
+}
+
+function collectCustomAttributes() {
+    const attributes = {};
+    const rows = document.querySelectorAll('#custom-attributes-list > div');
+
+    rows.forEach(row => {
+        const key = row.querySelector('.custom-key').value.trim();
+        const value = row.querySelector('.custom-value').value.trim();
+        if (key && value) {
+            attributes[key] = value;
+        }
+    });
+
+    return Object.keys(attributes).length > 0 ? attributes : null;
+}
+
+function clearCustomFieldRows() {
+    document.getElementById('custom-attributes-list').innerHTML = '';
 }

@@ -17,3 +17,6 @@ shiftDatabase.txt
 # OS-generated files
 Thumbs.db
 desktop.inis
+
+# python generated files
+.venv/

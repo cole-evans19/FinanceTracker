@@ -410,7 +410,7 @@ async function loadAttributeProfitability(start, end) {
         const data = await response.json();
 
         if (!data || data.length === 0) {
-            section.style.display = 'none';
+            output.innerHTML = '<p>No custom attributes meet the current threshold (or none tracked yet).</p>';
             return;
         }
 
@@ -552,24 +552,39 @@ function renderCalendar(schedule) {
 function renderSwapAnalysis(analysis) {
     const output = document.getElementById('forecast-output');
 
-    const renderCandidate = (c) =>
-        `${c.date} (${c.dayOfWeek} ${c.type}) — $${c.forecastGross.toFixed(2)} (n=${c.sampleCount})`;
-
     if (analysis.recommendKeepCurrentSchedule) {
+        const renderCandidate = (c) =>
+            `<li>${c.date} (${c.dayOfWeek} ${c.type}) — $${c.forecastGross.toFixed(2)} (n=${c.sampleCount})</li>`;
+
         output.innerHTML = `
             <p><strong>Recommendation: keep your current schedule.</strong> No unscheduled shift in the next two weeks outperforms your weakest scheduled shifts by a meaningful margin.</p>
             <h3>Your weakest scheduled shifts</h3>
-            <ul>${analysis.weakestScheduled.map(c => `<li>${renderCandidate(c)}</li>`).join('')}</ul>
+            <ul>${analysis.weakestScheduled.map(renderCandidate).join('')}</ul>
         `;
         return;
     }
 
+    const formatCandidate = (c) =>
+        `${c.date} (${c.dayOfWeek} ${c.type}) — $${c.forecastGross.toFixed(2)}`;
+
+    const dropList = analysis.suggestions.map(s => `<li>${formatCandidate(s.drop)}</li>`).join('');
+    const pickUpList = analysis.suggestions.map(s => `<li>${formatCandidate(s.pickUp)}</li>`).join('');
+
+    const summaryLines = analysis.suggestions.map(s =>
+        `<li>Drop <strong>${s.drop.date}</strong> for <strong>${s.pickUp.date}</strong> — projected gain: <strong>$${s.projectedGain.toFixed(2)}</strong></li>`
+    ).join('');
+
+    const totalGain = analysis.suggestions.reduce((sum, s) => sum + s.projectedGain, 0);
+
     output.innerHTML = `
-        <h3>Suggested swaps</h3>
-        <ul>
-            ${analysis.suggestions.map(s => `
-                <li>Drop <strong>${renderCandidate(s.drop)}</strong> → Pick up <strong>${renderCandidate(s.pickUp)}</strong> (projected gain: $${s.projectedGain.toFixed(2)})</li>
-            `).join('')}
-        </ul>
+        <h3>Consider Dropping</h3>
+        <ul>${dropList}</ul>
+
+        <h3>Consider Picking Up</h3>
+        <ul>${pickUpList}</ul>
+
+        <h3>Summary</h3>
+        <ul>${summaryLines}</ul>
+        <p><strong>Total projected gain if all swaps made: $${totalGain.toFixed(2)}</strong></p>
     `;
 }

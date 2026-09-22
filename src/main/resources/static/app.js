@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('add-shift-form').addEventListener('submit', handleAddShift);
     document.getElementById('load-data-btn').addEventListener('click', loadAllData);
+
+    document.getElementById('add-forecast-row-btn').addEventListener('click', addForecastRow);
+    document.getElementById('run-forecast-btn').addEventListener('click', handleRunForecast);
 });
 
 async function checkAuthStatus() {
@@ -457,4 +460,116 @@ function collectCustomAttributes() {
 
 function clearCustomFieldRows() {
     document.getElementById('custom-attributes-list').innerHTML = '';
+}
+
+let forecastRowCount = 0;
+
+function addForecastRow() {
+    const container = document.getElementById('forecast-rows-list');
+    const rowId = `forecast-row-${forecastRowCount++}`;
+
+    const row = document.createElement('div');
+    row.id = rowId;
+    row.innerHTML = `
+        <input type="date" class="forecast-date">
+        <select class="forecast-type">
+            <option value="MORNING">Morning</option>
+            <option value="AFTERNOON">Afternoon</option>
+            <option value="EVENING">Evening</option>
+            <option value="NIGHT">Night</option>
+        </select>
+        <button type="button" onclick="document.getElementById('${rowId}').remove()">Remove</button>
+    `;
+
+    container.appendChild(row);
+}
+
+function collectForecastSchedule() {
+    const rows = document.querySelectorAll('#forecast-rows-list > div');
+    const schedule = [];
+
+    rows.forEach(row => {
+        const date = row.querySelector('.forecast-date').value;
+        const type = row.querySelector('.forecast-type').value;
+        if (date) {
+            schedule.push({ date, type });
+        }
+    });
+
+    return schedule;
+}
+
+async function handleRunForecast() {
+    const output = document.getElementById('forecast-output');
+    const schedule = collectForecastSchedule();
+
+    renderCalendar(schedule);
+
+    if (schedule.length === 0) {
+        output.innerHTML = '<p>Add at least one upcoming shift first.</p>';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/forecast?jobId=${currentJobId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(schedule)
+        });
+
+        if (!response.ok) {
+            output.innerHTML = '<p>Something went wrong running the forecast.</p>';
+            return;
+        }
+
+        const analysis = await response.json();
+        renderSwapAnalysis(analysis);
+
+    } catch (err) {
+        output.textContent = 'Network error: ' + err.message;
+    }
+}
+
+function renderCalendar(schedule) {
+    const calendarEl = document.getElementById('forecast-calendar');
+    const scheduledByDate = {};
+    schedule.forEach(s => { scheduledByDate[s.date] = s.type; });
+
+    const days = [];
+    const today = new Date();
+    for (let i = 1; i <= 14; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+        const scheduledType = scheduledByDate[dateStr];
+
+        days.push(`<li${scheduledType ? ' style="font-weight:bold"' : ''}>${dateStr} — ${scheduledType ? scheduledType : 'not scheduled'}</li>`);
+    }
+
+    calendarEl.innerHTML = `<ul>${days.join('')}</ul>`;
+}
+
+function renderSwapAnalysis(analysis) {
+    const output = document.getElementById('forecast-output');
+
+    const renderCandidate = (c) =>
+        `${c.date} (${c.dayOfWeek} ${c.type}) — $${c.forecastGross.toFixed(2)} (n=${c.sampleCount})`;
+
+    if (analysis.recommendKeepCurrentSchedule) {
+        output.innerHTML = `
+            <p><strong>Recommendation: keep your current schedule.</strong> No unscheduled shift in the next two weeks outperforms your weakest scheduled shifts by a meaningful margin.</p>
+            <h3>Your weakest scheduled shifts</h3>
+            <ul>${analysis.weakestScheduled.map(c => `<li>${renderCandidate(c)}</li>`).join('')}</ul>
+        `;
+        return;
+    }
+
+    output.innerHTML = `
+        <h3>Suggested swaps</h3>
+        <ul>
+            ${analysis.suggestions.map(s => `
+                <li>Drop <strong>${renderCandidate(s.drop)}</strong> → Pick up <strong>${renderCandidate(s.pickUp)}</strong> (projected gain: $${s.projectedGain.toFixed(2)})</li>
+            `).join('')}
+        </ul>
+    `;
 }

@@ -384,7 +384,7 @@ async function handleDeleteShift(date, type) {
     if (!confirm(`Delete the ${type} shift on ${date}?`)) return;
 
     try {
-        const response = await fetch(`${API_BASE}?jobId=${currentJobId}&?date=${date}&type=${type}`, {
+        const response = await fetch(`${API_BASE}?jobId=${currentJobId}&date=${date}&type=${type}`, {
             method: 'DELETE'
         });
 
@@ -399,7 +399,6 @@ async function handleDeleteShift(date, type) {
 }
 
 async function loadAttributeProfitability(start, end) {
-    const section = document.getElementById('attribute-profitability-section');
     const output = document.getElementById('attribute-profitability-output');
     const minShifts = document.getElementById('attribute-min-shifts-input').value || 1;
 
@@ -412,7 +411,6 @@ async function loadAttributeProfitability(start, end) {
             return;
         }
 
-        section.style.display = 'block';
         output.innerHTML = data.map(group => `
             <h3>${group.key}</h3>
             <ul>
@@ -423,7 +421,6 @@ async function loadAttributeProfitability(start, end) {
         `).join('');
 
     } catch (err) {
-        section.style.display = 'block';
         output.textContent = 'Failed to load attribute profitability: ' + err.message;
     }
 }

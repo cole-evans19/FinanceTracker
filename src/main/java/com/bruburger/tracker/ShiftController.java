@@ -13,13 +13,15 @@ import java.util.List;
 public class ShiftController {
 
     private final ShiftDAO shiftDAO;
+    private String normalize(String s) {
+        return s.toLowerCase().trim().replaceAll("\\s+", " ");
+    }
+    public record ResponseEntityWrapper(String message) {}
+    public record AttributeValueEntry(String value, double avgGross, double avgTips, int count) {}
+    public record AttributeKeyGroup(String key, List<AttributeValueEntry> values) {}
 
     public ShiftController(ShiftDAO shiftDAO) {
         this.shiftDAO = shiftDAO;
-    }
-
-    private int getUserId(Authentication authentication) {
-        return ((UserPrincipal) authentication.getPrincipal()).getId();
     }
 
     @GetMapping
@@ -32,7 +34,7 @@ public class ShiftController {
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         return shiftDAO.findShiftsBetween(userId, jobId, startDate, endDate);
     }
 
@@ -42,7 +44,7 @@ public class ShiftController {
             @RequestParam("jobId") int jobId,
             @RequestBody Shift shift) {
 
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         try {
             shiftDAO.insertShift(userId, jobId, shift);
             return new ResponseEntityWrapper("Shift added successfully.");
@@ -58,7 +60,7 @@ public class ShiftController {
             @RequestParam("date") String date,
             @RequestParam("type") String type) {
 
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         shiftDAO.deleteShift(userId, jobId, LocalDate.parse(date), ShiftType.valueOf(type.toUpperCase()));
         return new ResponseEntityWrapper("Delete request processed.");
     }
@@ -70,7 +72,7 @@ public class ShiftController {
             @RequestParam("start") String start,
             @RequestParam("end") String end) {
 
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
@@ -109,7 +111,7 @@ public class ShiftController {
             @RequestParam("end") String end,
             @RequestParam(value = "minShifts", defaultValue = "1") int minShifts) {
 
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         LocalDate startDate = LocalDate.parse(start);
         LocalDate endDate = LocalDate.parse(end);
 
@@ -151,16 +153,6 @@ public class ShiftController {
         return new ProfitabilityResponse(most, least);
     }
 
-    // small helper record for simple JSON success messages
-    public record ResponseEntityWrapper(String message) {}
-
-    private String normalize(String s) {
-        return s.toLowerCase().trim().replaceAll("\\s+", " ");
-    }
-
-    public record AttributeValueEntry(String value, double avgGross, double avgTips, int count) {}
-    public record AttributeKeyGroup(String key, List<AttributeValueEntry> values) {}
-
     @GetMapping("/attribute-profitability")
     public List<AttributeKeyGroup> getAttributeProfitability(
             Authentication authentication,
@@ -169,7 +161,7 @@ public class ShiftController {
             @RequestParam("end") String end,
             @RequestParam(value = "minShifts", defaultValue = "1") int minShifts) {
 
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         List<Shift> shifts = shiftDAO.findShiftsBetween(userId, jobId, LocalDate.parse(start), LocalDate.parse(end));
 
         // key -> value -> [totalGross, totalTips, count]

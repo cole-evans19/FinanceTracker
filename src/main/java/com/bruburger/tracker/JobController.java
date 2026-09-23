@@ -15,27 +15,23 @@ public class JobController {
         this.jobDAO = jobDAO;
     }
 
-    private int getUserId(Authentication authentication) {
-        return ((UserPrincipal) authentication.getPrincipal()).getId();
-    }
-
     public record CreateJobRequest(String name) {}
 
     @GetMapping
     public List<Job> getJobs(Authentication authentication) {
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         return jobDAO.findJobsByUser(userId);
     }
 
     @PostMapping
     public Job createJob(Authentication authentication, @RequestBody CreateJobRequest request) {
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         return jobDAO.insertJob(userId, request.name());
     }
 
     @DeleteMapping("/{id}")
     public void deleteJob(Authentication authentication, @PathVariable int id) {
-        int userId = getUserId(authentication);
+        int userId = SecurityUtils.getUserId(authentication);
         jobDAO.deleteJob(userId, id);
     }
 }

@@ -45,7 +45,7 @@ public class ShiftDAO {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            if (e.getMessage() != null && e.getMessage().contains("UNIQUE constraint failed")) {
+            if (e.getMessage() != null && e.getMessage().contains("unique constraint")) {
                 throw new DuplicateShiftException(
                     "A shift already exists for " + shift.getDate() + " (" + shift.getType() + ")"
                 );

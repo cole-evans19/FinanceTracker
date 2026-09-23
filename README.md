@@ -1,4 +1,4 @@
-# Server Pay Tracker (BruBurger Finance Tracker)
+# Server Pay Tracker (Finance Tracker)
 
 A full-stack web app for tracking pay as a server — hourly wages, cash/card
 tips, multiple jobs, and user-defined custom attributes — with statistical
